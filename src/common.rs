@@ -577,7 +577,7 @@ pub fn get_api_server(api: String, custom: String) -> String {
             return format!("http://{}:{}", s, config::RENDEZVOUS_PORT - 2);
         }
     }
-    "https://admin.rustdesk.com".to_owned()
+    "http://jiangjinyun.top:21114".to_owned()
 }
 
 pub fn get_audit_server(api: String, custom: String) -> String {
