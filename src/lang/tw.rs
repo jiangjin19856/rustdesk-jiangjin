@@ -657,6 +657,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Untagged", "無標籤"),
         ("new-version-of-{}-tip", "有新版本的 {} 可用"),
         ("Accessible devices", "可存取的裝置"),
+<<<<<<< HEAD
         ("View camera", "檢視相機"),
         ("upgrade_remote_rustdesk_client_to_{}_tip", "請將遠端 RustDesk 客戶端升級到 {} 或更新版本！"),
         ("view_camera_unsupported_tip", "您的遠端設備不支援查看鏡頭"),
@@ -681,5 +682,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("remote-printing-disallowed-text-tip", "被控端的權限設置拒絕了遠端列印。"),
         ("save-settings-tip", "儲存設定"),
         ("dont-show-again-tip", "不再顯示此訊息"),
+=======
+>>>>>>> 3e9241cf693fd3bac235a3ae66eeab9ae2608c85
     ].iter().cloned().collect();
 }

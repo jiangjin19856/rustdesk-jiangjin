@@ -1,9 +1,6 @@
 use std::sync::{Arc, Mutex, RwLock};
 
-#[cfg(any(
-    target_os = "windows",
-    all(target_os = "macos", feature = "unix-file-copy-paste")
-))]
+#[cfg(target_os = "windows")]
 use hbb_common::ResultType;
 #[cfg(any(target_os = "windows", feature = "unix-file-copy-paste"))]
 use hbb_common::{allow_err, log};
@@ -17,16 +14,10 @@ use hbb_common::{
 use serde_derive::{Deserialize, Serialize};
 use thiserror::Error;
 
-#[cfg(any(
-    target_os = "windows",
-    all(target_os = "macos", feature = "unix-file-copy-paste")
-))]
+#[cfg(target_os = "windows")]
 pub mod context_send;
 pub mod platform;
-#[cfg(any(
-    target_os = "windows",
-    all(target_os = "macos", feature = "unix-file-copy-paste")
-))]
+#[cfg(target_os = "windows")]
 pub use context_send::*;
 
 #[cfg(target_os = "windows")]
@@ -36,17 +27,8 @@ const ERR_CODE_INVALID_PARAMETER: u32 = 0x00000002;
 #[cfg(target_os = "windows")]
 const ERR_CODE_SEND_MSG: u32 = 0x00000003;
 
-#[cfg(any(
-    target_os = "windows",
-    all(target_os = "macos", feature = "unix-file-copy-paste")
-))]
+#[cfg(target_os = "windows")]
 pub(crate) use platform::create_cliprdr_context;
-
-pub struct ProgressPercent {
-    pub percent: f64,
-    pub is_canceled: bool,
-    pub is_failed: bool,
-}
 
 // to-do: This trait may be removed, because unix file copy paste does not need it.
 /// Ability to handle Clipboard File from remote rustdesk client
@@ -62,10 +44,6 @@ pub trait CliprdrServiceContext: Send + Sync {
     fn empty_clipboard(&mut self, conn_id: i32) -> Result<bool, CliprdrError>;
     /// run as a server for clipboard RPC
     fn server_clip_file(&mut self, conn_id: i32, msg: ClipboardFile) -> Result<(), CliprdrError>;
-    /// get the progress of the paste task.
-    fn get_progress_percent(&self) -> Option<ProgressPercent>;
-    /// cancel the paste task.
-    fn cancel(&mut self);
 }
 
 #[derive(Error, Debug)]
@@ -84,11 +62,11 @@ pub enum CliprdrError {
     ConversionFailure,
     #[error("failure to read clipboard")]
     OpenClipboard,
-    #[error("failure to read file metadata or content, path: {path}, err: {err}")]
+    #[error("failure to read file metadata or content")]
     FileError { path: String, err: std::io::Error },
-    #[error("invalid request: {description}")]
+    #[error("invalid request")]
     InvalidRequest { description: String },
-    #[error("common request: {description}")]
+    #[error("common request")]
     CommonError { description: String },
     #[error("unknown cliprdr error")]
     Unknown(u32),

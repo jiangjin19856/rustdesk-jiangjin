@@ -188,7 +188,6 @@ pub enum Data {
     Login {
         id: i32,
         is_file_transfer: bool,
-        is_view_camera: bool,
         peer_id: String,
         name: String,
         authorized: bool,
@@ -272,8 +271,6 @@ pub enum Data {
     HwCodecConfig(Option<String>),
     RemoveTrustedDevices(Vec<Bytes>),
     ClearTrustedDevices,
-    #[cfg(all(target_os = "windows", feature = "flutter"))]
-    PrinterData(Vec<u8>),
 }
 
 #[tokio::main(flavor = "current_thread")]
@@ -463,7 +460,7 @@ async fn handle(data: Data, stream: &mut Connection) {
                 .lock()
                 .unwrap()
                 .iter()
-                .filter(|x| x.conn_type == crate::server::AuthConnType::Remote)
+                .filter(|x| x.1 == crate::server::AuthConnType::Remote)
                 .count();
             allow_err!(stream.send(&Data::VideoConnCount(Some(n))).await);
         }
@@ -1283,6 +1280,6 @@ mod test {
     #[test]
     fn verify_ffi_enum_data_size() {
         println!("{}", std::mem::size_of::<Data>());
-        assert!(std::mem::size_of::<Data>() <= 96);
+        assert!(std::mem::size_of::<Data>() < 96);
     }
 }

@@ -269,10 +269,8 @@ class _ConnectionTabPageState extends State<ConnectionTabPage> {
           style: style,
         ),
         proc: () async {
-          await DesktopMultiWindow.invokeMethod(
-              kMainWindowId,
-              kWindowEventMoveTabToNewWindow,
-              '${windowId()},$key,$sessionId,RemoteDesktop');
+          await DesktopMultiWindow.invokeMethod(kMainWindowId,
+              kWindowEventMoveTabToNewWindow, '${windowId()},$key,$sessionId');
           cancelFunc();
         },
         padding: padding,
@@ -419,8 +417,8 @@ class _ConnectionTabPageState extends State<ConnectionTabPage> {
           await WindowController.fromWindowId(windowId()).setFullscreen(false);
           stateGlobal.setFullscreen(false, procWnd: false);
         }
-        await setNewConnectWindowFrame(windowId(), id!, prePeerCount,
-            WindowType.RemoteDesktop, display, screenRect);
+        await setNewConnectWindowFrame(
+            windowId(), id!, prePeerCount, display, screenRect);
         Future.delayed(Duration(milliseconds: isWindows ? 100 : 0), () async {
           await windowOnTop(windowId());
         });
