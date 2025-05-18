@@ -1216,8 +1216,8 @@ impl Connection {
 
         #[cfg(not(target_os = "android"))]
         {
-            pi.hostname = whoami::hostname();
-            pi.platform = whoami::platform().to_string();
+            pi.hostname = hbb_common::whoami::hostname();
+            pi.platform = hbb_common::whoami::platform().to_string();
         }
         #[cfg(target_os = "android")]
         {
@@ -1262,16 +1262,25 @@ impl Connection {
         #[cfg(any(target_os = "windows", feature = "unix-file-copy-paste"))]
         {
             let is_both_windows = cfg!(target_os = "windows")
-                && self.lr.my_platform == whoami::Platform::Windows.to_string();
+                && self.lr.my_platform == hbb_common::whoami::Platform::Windows.to_string();
             #[cfg(feature = "unix-file-copy-paste")]
             let is_unix_and_peer_supported = crate::is_support_file_copy_paste(&self.lr.version);
             #[cfg(not(feature = "unix-file-copy-paste"))]
             let is_unix_and_peer_supported = false;
             // to-do: add file clipboard support for macos
             let is_both_macos = cfg!(target_os = "macos")
+<<<<<<< HEAD
                 && self.lr.my_platform == whoami::Platform::MacOS.to_string();
             let has_file_clipboard =
                 is_both_windows || (is_unix_and_peer_supported && !is_both_macos);
+=======
+                && self.lr.my_platform == hbb_common::whoami::Platform::MacOS.to_string();
+            let is_peer_support_paste_if_macos =
+                crate::is_support_file_paste_if_macos(&self.lr.version);
+            let has_file_clipboard = is_both_windows
+                || (is_unix_and_peer_supported
+                    && (!is_both_macos || is_peer_support_paste_if_macos));
+>>>>>>> upstream/master
             platform_additions.insert("has_file_clipboard".into(), json!(has_file_clipboard));
         }
 
@@ -1837,6 +1846,27 @@ impl Connection {
                 return true;
             }
 
+            // https://github.com/rustdesk/rustdesk-server-pro/discussions/646
+            // `is_logon` is used to check login with `OPTION_ALLOW_LOGON_SCREEN_PASSWORD` == "Y".
+            // `is_logon_ui()` is used on Windows, because there's no good way to detect `is_locked()`.
+            // Detecting `is_logon_ui()` (if `LogonUI.exe` running) is a workaround.
+            #[cfg(target_os = "windows")]
+            let is_logon = || {
+                crate::platform::is_prelogin() || {
+                    match crate::platform::is_logon_ui() {
+                        Ok(result) => result,
+                        Err(e) => {
+                            log::error!("Failed to detect logon UI: {:?}", e);
+                            false
+                        }
+                    }
+                }
+            };
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            let is_logon = || crate::platform::is_prelogin() || crate::platform::is_locked();
+            #[cfg(any(target_os = "android", target_os = "ios"))]
+            let is_logon = || crate::platform::is_prelogin();
+
             if !hbb_common::is_ip_str(&lr.username)
                 && !hbb_common::is_domain_port_str(&lr.username)
                 && lr.username != Config::get_id()
@@ -1845,8 +1875,8 @@ impl Connection {
                     .await;
                 return false;
             } else if (password::approve_mode() == ApproveMode::Click
-                && !(crate::platform::is_prelogin()
-                    && crate::get_builtin_option(keys::OPTION_ALLOW_LOGON_SCREEN_PASSWORD) == "Y"))
+                && !(crate::get_builtin_option(keys::OPTION_ALLOW_LOGON_SCREEN_PASSWORD) == "Y"
+                    && is_logon()))
                 || password::approve_mode() == ApproveMode::Both && !password::has_valid_password()
             {
                 self.try_start_cm(lr.my_id, lr.my_name, false);
@@ -2616,6 +2646,16 @@ impl Connection {
                 }
                 Some(message::Union::VoiceCallResponse(_response)) => {
                     // TODO: Maybe we can do a voice call from cm directly.
+                }
+                Some(message::Union::ScreenshotRequest(request)) => {
+                    if let Some(tx) = self.inner.tx.clone() {
+                        crate::video_service::set_take_screenshot(
+                            request.display as _,
+                            request.sid.clone(),
+                            tx,
+                        );
+                        self.refresh_video_display(Some(request.display as usize));
+                    }
                 }
                 _ => {}
             }
@@ -3961,11 +4001,31 @@ mod raii {
     pub struct AuthedConnID(i32, AuthConnType);
 
     impl AuthedConnID {
+<<<<<<< HEAD
         pub fn new(conn_id: i32, conn_type: AuthConnType, session_key: SessionKey) -> Self {
             AUTHED_CONNS
                 .lock()
                 .unwrap()
                 .push((conn_id, conn_type, session_key));
+=======
+        pub fn new(
+            conn_id: i32,
+            conn_type: AuthConnType,
+            session_key: SessionKey,
+            sender: mpsc::UnboundedSender<Data>,
+            lr: LoginRequest,
+        ) -> Self {
+            let printer = conn_type == crate::server::AuthConnType::Remote
+                && crate::is_support_remote_print(&lr.version)
+                && lr.my_platform == hbb_common::whoami::Platform::Windows.to_string();
+            AUTHED_CONNS.lock().unwrap().push(AuthedConn {
+                conn_id,
+                conn_type,
+                session_key,
+                sender,
+                printer,
+            });
+>>>>>>> upstream/master
             Self::check_wake_lock();
             use std::sync::Once;
             static _ONCE: Once = Once::new();

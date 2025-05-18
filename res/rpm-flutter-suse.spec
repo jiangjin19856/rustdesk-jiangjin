@@ -1,5 +1,9 @@
 Name:       rustdesk
+<<<<<<< HEAD
 Version:    1.3.8
+=======
+Version:    1.4.0
+>>>>>>> upstream/master
 Release:    0
 Summary:    RPM package
 License:    GPL-3.0
